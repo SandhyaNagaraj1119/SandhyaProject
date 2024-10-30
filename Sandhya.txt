@@ -1,0 +1,74 @@
+Analysis and logical implementation
+
+-->
+
+File Reading: Opens the file as a regular text file and reads all lines.
+Header Parsing: Extracts headers from the first line and splits the remaining lines manually.
+Data Parsing:Extracts relevant fields by splitting each line on commas.Handles date parsing and leap day removal without additional libraries.
+Temperature Records: Calculates record highs and lows for 2005-2014, and identifies any record-breaking temperatures in 2015.
+Text Output: Displays results directly in the console.
+
+-->
+This version gives you the flexibility to work with raw text input without relying on csv.
+
+-->
+
+Code:
+
+from datetime import datetime
+
+data = []
+record highs = {}
+record lows = {}
+high_breakers_2015 = []
+low_breakers_2015 = []
+file_path = '/path/to/temperature.csv'
+with open(file_path, 'r') as file:
+    lines = file.readlines()
+    headers = lines[0].strip().split(',')
+    for line in lines[1:]: 
+        row = line.strip().split(',')
+        row_data = dict(zip(headers, row))
+        
+        date = datetime.strptime(row_data['Date'], '%Y-%m-%d')
+        year = date.year
+        month_day = date.strftime('%m-%d')
+        element = row_data['Element']
+        data_value = int(row_data['Data_Value'])/10        
+        if month_day == '02-29':
+            continue
+
+        data.append((year, month_day, element, data_value))
+
+        if 2005 <= year <= 2014:
+            if element == 'TMAX':
+                if month_day not in record_highs or data_value > record_highs[month_day]:
+                    record_highs[month_day] = data_value
+            elif element == 'TMIN':
+                if month_day not in record_lows or data_value < record_lows[month_day]:
+                    record_lows[month_day] = data_value
+
+for year, month_day, element, data_value in data:
+    if year == 2015:
+        if element == 'TMAX' and month_day in record_highs and data_value > record_highs[month_day]:
+            high_breakers_2015.append((month_day, data_value))
+        elif element == 'TMIN' and month_day in record_lows and data_value < record_lows[month_day]:
+            low_breakers_2015.append((month_day, data_value))
+
+print("Record Highs by Day (2005-2014):")
+for day, value in record_highs.items():
+    print(f"{day}: {value} °C")
+
+print("\nRecord Lows by Day (2005-2014):")
+for day, value in record_lows.items():
+    print(f"{day}: {value} °C")
+
+print("\n2015 Record-breaking Highs:")
+for day, value in high_breakers_2015:
+    print(f"{day}: {value} °C")
+
+print("\n2015 Record-breaking Lows:")
+for day, value in low_breakers_2015:
+    print(f"{day}: {value} °C")
+
+
